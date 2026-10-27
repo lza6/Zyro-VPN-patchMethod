@@ -1,0 +1,9 @@
+# 敏感/本地文件
+*.log
+zyro_unidbg.log
+frida*.log
+debug.keystore
+z.keystore
+captured_*.zip
+bitcode_runtime.bin
+__pycache__/
