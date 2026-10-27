@@ -58,3 +58,16 @@
 3. Frida hook 抓到的"key"是**输入**（key material），真实密钥是其输出（hmac 结果）—— 语义要分清
 4. unicorn2 backend 支持 mem hook 但慢 10 倍；dynarmic 快但不支持 write hook —— 按需切换
 5. HookZz 的 postCall 在这个版本会崩（寄存器恢复问题），只用 preCall
+
+
+## 追加：blutter 反编译新发现（同日第二轮）
+
+- blutter 本机构建成功（关键坑全部解决：Dart SDK sparse clone 断线重试、ICU 76 预编译包、capstone.dll 从 pip 包提取 + lib /def 生成导入库、blutter CMakeLists 的 ICU 直链 patch）
+- exe 运行依赖：capstone.dll + icuuc76/icudt76/icuin76/icutu76.dll + MSVCP140/VCRUNTIME140 系列
+- 解密流程完整定位（asm/pDm.dart closure 0xb12b60 + asm/nIm.dart 类 MV）：
+  1. `getSingKeyRunTime` MethodChannel → singKey（hex(sha256(签名))）
+  2. 下载 zyro_remote blob → split('::') → hdr + b64ct
+  3. `encry/receive` 下发 k1/iv1 → Java 静态字段
+  4. Java `c()` 用 GCM(nonce=k1, key=iv1) 解密 blob → sing-box 配置 → Mobile.parse
+- 关键函数 0x3a4d3c / 0x5a247c / 0xb135f8 / 0xb12f3c / 0x3c9878 在 libapp 中被编译器内联/未 dump，k1/iv1 派生体需 blutter --rebuild 完整模式或 ARM 真机 hook 一次
+- 60+ 组合的静态派生猜解（singKey 各 hash × hdr/sk nonce 8/12/16B）全部被 GCM tag 否决 → k1/iv1 非简单静态派生
