@@ -107,7 +107,8 @@ python scripts/unpack_zyro.py "Zyro VPN_2.1.1_Mod.apk" out\
 
 - [ ] Supabase 节点 blob 解密：解密 k1(GCM nonce)/iv1(AES key) 由 Dart 运行时生成、经 `com.zyrovpn.app/encry` 通道传给 native。`scripts/gcm_sweep.py` 已就绪（tag 验证穷举），只差运行时抓一次 k1/iv1
 - 脱壳后无壳 APK（`zyro_unpacked.apk`）已在 x86_64 模拟器跑到 Flutter 引擎初始化，但 libndk_translation 0.2.3 对 Flutter AOT 存在 SIGILL 兼容性 bug（与脱壳无关），需 ARM 真机/云机完成最后一步
-- 已排除：singKey(sha256(签名)) 的常见派生 × GCM tag 验证全部不匹配
+- 已排除：singKey(sha256(签名)) 的常见派生 × GCM tag 验证全部不匹配（含 md5/sha1 变体、insns_xor_key 参与派生、8/12/16B nonce 共 60+ 组合，脚本 `scripts/gcm_sweep.py`）
+- 替代路线：[blutter](https://github.com/worawit/blutter)（Dart AOT 反编译）可静态还原 k1/iv1 生成逻辑，但 Windows 构建需 depot_tools + gclient 完整 Dart SDK 工具链（~1-2GB 下载 + 1 小时编译），未在本轮完成；Dart 版本已确认为 3.5.5
 
 ## 免责声明
 
