@@ -71,3 +71,16 @@
   4. Java `c()` 用 GCM(nonce=k1, key=iv1) 解密 blob → sing-box 配置 → Mobile.parse
 - 关键函数 0x3a4d3c / 0x5a247c / 0xb135f8 / 0xb12f3c / 0x3c9878 在 libapp 中被编译器内联/未 dump，k1/iv1 派生体需 blutter --rebuild 完整模式或 ARM 真机 hook 一次
 - 60+ 组合的静态派生猜解（singKey 各 hash × hdr/sk nonce 8/12/16B）全部被 GCM tag 否决 → k1/iv1 非简单静态派生
+
+
+## 追加：手动反汇编终局（同日第三轮）
+
+- blutter --rebuild 完成，但 0x3a4d3c / 0x5a247c / 0xb135f8 / 0xb12f3c / 0x3c9878 仍无伪码 — 它们是裸函数（非 Dart class 方法），blutter 不覆盖
+- capstone 手动反汇编成功定性：
+  - `0x3a4d3c` = 读本地缓存（pp 引用 "cache"/".json"/".tmp"）
+  - `0x5a247c` = 调度器（await 后调 0x3a4d3c）
+  - `0x5a2330` = HTTP 下载器（pp+0x9ff0 = "content-length"）
+  - `0xb135f8` = buildConfig 流程（含 "configurationId"）
+- k1/iv1 猜解终局：hdr+singKey 全组合（8+4/4+8B nonce，md5/sha256 key）均被 GCM tag 否决
+- 唯一途径：ARM 真机/云机 Frida hook（tools/frida-hooks/）或 unidbg 模拟 Dart snapshot 调用约定
+- 广告互拉包冻结：`pm disable-user` com.blackhole.hd1763494114 + ai.video.generator.text.video
