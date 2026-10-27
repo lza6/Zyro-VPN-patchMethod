@@ -84,3 +84,16 @@
 - k1/iv1 猜解终局：hdr+singKey 全组合（8+4/4+8B nonce，md5/sha256 key）均被 GCM tag 否决
 - 唯一途径：ARM 真机/云机 Frida hook（tools/frida-hooks/）或 unidbg 模拟 Dart snapshot 调用约定
 - 广告互拉包冻结：`pm disable-user` com.blackhole.hd1763494114 + ai.video.generator.text.video
+
+
+## 终局定位（同日第四轮 — blutter 深挖）
+
+- API35 模拟器（tfgy_e2e）同样 SIGILL — ndk_translation 全版本对 Flutter AOT 均不可用
+- blutter 深挖成果：
+  - `0x5a24f0`（size 未知，blutter 未 dump）= k1/iv1 生成函数，通过 switchable dynamic call（blr x30）调用对象方法，静态无法解析目标
+  - `0x5a262c` = sing-box 订阅解析器（profile-title/content-disposition/subscription-userinfo 是 Hiddify 标准头）— 处理的是**解密后明文**
+  - `0x3a4d3c` = 读本地缓存（"cache"/".json"/".tmp"）— 缓存的是已解密配置
+  - `0xb135f8` = buildConfig（"configurationId"）
+- 修正后完整链路：首次运行 → 生成 k1/iv1（0x5a24f0，运行时对象方法）→ receive 下发 Java → GCM 解密 blob → 明文存缓存（.json）→ 后续直接读缓存
+- 结论：k1/iv1 是运行时对象方法动态生成，无静态常量，60+ 猜解全否决合理
+- 收尾必须：ARM 真机/云机 Frida hook 0x5a24f0 返回值，或 blutter_frida.js 模板（填 fn_addr=0x5a24f0）在真机 dump
