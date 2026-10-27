@@ -105,8 +105,9 @@ python scripts/unpack_zyro.py "Zyro VPN_2.1.1_Mod.apk" out\
 
 ## 剩余工作
 
-- [ ] Supabase 节点 blob 解密：需 ARM 真机/云机 + Frida hook `encry/receive`（k1/iv1 由 Dart 传入），x86_64 官方模拟器因 ndk_translation 的 FindClass trampoline bug 无法运行 DPT 壳
-- [ ] （可选）Dart AOT（libapp.so）静态还原 k1 派生逻辑
+- [ ] Supabase 节点 blob 解密：解密 k1(GCM nonce)/iv1(AES key) 由 Dart 运行时生成、经 `com.zyrovpn.app/encry` 通道传给 native。`scripts/gcm_sweep.py` 已就绪（tag 验证穷举），只差运行时抓一次 k1/iv1
+- 脱壳后无壳 APK（`zyro_unpacked.apk`）已在 x86_64 模拟器跑到 Flutter 引擎初始化，但 libndk_translation 0.2.3 对 Flutter AOT 存在 SIGILL 兼容性 bug（与脱壳无关），需 ARM 真机/云机完成最后一步
+- 已排除：singKey(sha256(签名)) 的常见派生 × GCM tag 验证全部不匹配
 
 ## 免责声明
 
